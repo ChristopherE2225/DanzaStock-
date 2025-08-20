@@ -166,7 +166,7 @@ export default function App() {
     );
 
     return (
-        <div className="bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 min-h-screen p-4 md:p-8 text-gray-800 font-inter">
+        <div className="bg-gradient-to-br from-teal-100 via-cyan-100 to-blue-100 min-h-screen p-4 md:p-8 text-gray-800 font-inter">
             <style>
                 {`
                 @keyframes fadeIn {
@@ -191,7 +191,7 @@ export default function App() {
             <div className="container mx-auto max-w-7xl">
                 <header className="bg-white p-6 rounded-3xl shadow-xl ring-1 ring-inset ring-purple-200/50 backdrop-blur-md bg-opacity-80 mb-8 text-center animate-fadeIn">
                     <h1 className="text-5xl md:text-6xl font-extrabold text-blue-900 mb-2 drop-shadow-lg">
-                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-700">Danzastock</span>
+                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-700">Danzastock 💃</span>
                     </h1>
                     <p className="text-xl text-gray-600 font-medium">Gestión de Inventario de Danza</p>
                     <div className="mt-6 flex flex-wrap justify-center space-x-2 md:space-x-4">
