@@ -166,7 +166,8 @@ export default function App() {
     );
 
     return (
-        <div className="bg-gradient-to-br from-teal-100 via-cyan-100 to-blue-100 min-h-screen p-4 md:p-8 text-gray-800 font-inter">
+        // Changed bg-gradient to a different set of colors to force Vercel to recompile
+        <div className="bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 min-h-screen p-4 md:p-8 text-gray-800 font-inter">
             <style>
                 {`
                 @keyframes fadeIn {
