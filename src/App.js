@@ -11,6 +11,7 @@ export default function App() {
     const [message, setMessage] = useState({ text: '', type: '' });
     const [db, setDb] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [statusValue, setStatusValue] = useState('Almacén');
 
     // Debugging block: Firebase config for local testing
     // If you are not using Canvas, you can paste your Firebase config here.
@@ -27,6 +28,15 @@ export default function App() {
     // Firebase-related variables from the environment (provided by the Canvas platform)
     const firebaseConfig = process.env.NODE_ENV === 'production' && typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : localFirebaseConfig;
 
+    // Use a single useEffect to handle changes to `editingItem`
+    useEffect(() => {
+        if (editingItem) {
+            setStatusValue(editingItem.status);
+        } else {
+            setStatusValue('Almacén');
+        }
+    }, [editingItem]);
+
     // useEffect hook to initialize Firebase and set up the database
     useEffect(() => {
         const initializeFirebase = async () => {
@@ -34,40 +44,28 @@ export default function App() {
                 const app = initializeApp(firebaseConfig);
                 const dbInstance = getFirestore(app);
                 setDb(dbInstance);
-
                 console.log("Firebase inicializado y conectado a Firestore.");
             } catch (e) {
                 console.error("Error al inicializar Firebase:", e);
                 showMessage("Error al inicializar la base de datos.", 'error');
             }
         };
-
         initializeFirebase();
     }, []);
 
     // useEffect hook to set up Firestore listener
     useEffect(() => {
         if (!db) return;
-
-        // The collection path now points to a single collection accessible by all
         const collectionRef = collection(db, 'danzastock_inventario');
-        
-        // Listen for real-time updates to the single collection
         const unsubscribe = onSnapshot(collectionRef, (querySnapshot) => {
-            // Process the single list of documents to separate into materials and costumes
-            // based on the existence of a 'quantity' field.
             const allItems = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             const materials = allItems.filter(item => item.quantity !== undefined);
             const costumes = allItems.filter(item => item.quantity === undefined);
-            
             setItems({ materials, costumes });
-            
         }, (error) => {
             console.error("Error fetching documents:", error);
             showMessage("Error al cargar los datos.", 'error');
         });
-
-        // Return cleanup function to unsubscribe from listener
         return () => unsubscribe();
     }, [db]);
 
@@ -88,7 +86,7 @@ export default function App() {
         const formData = new FormData(e.target);
         const itemData = {
             name: formData.get('name'),
-            status: formData.get('status'),
+            status: statusValue,
             loanedTo: formData.get('loanedTo') || '',
         };
 
@@ -97,7 +95,6 @@ export default function App() {
         }
 
         try {
-            // All operations now use the 'danzastock_inventario' collection
             const inventoryCollectionRef = collection(db, 'danzastock_inventario');
             if (editingItem) {
                 await setDoc(doc(inventoryCollectionRef, editingItem.id), itemData);
@@ -111,7 +108,6 @@ export default function App() {
             showMessage('Error al guardar el artículo.', 'error');
         }
 
-        // Reset form and editing state
         e.target.reset();
         setEditingItem(null);
     };
@@ -128,7 +124,6 @@ export default function App() {
             return;
         }
         try {
-            // The path for deleting items also uses 'danzastock_inventario'
             const itemDocRef = doc(db, 'danzastock_inventario', id);
             await deleteDoc(itemDocRef);
             showMessage('Artículo eliminado correctamente.', 'success');
@@ -142,7 +137,6 @@ export default function App() {
     const handleViewChange = (view) => {
         setCurrentView(view);
         setEditingItem(null);
-        // Clear search input on view change
         setSearchQuery('');
     };
 
@@ -235,7 +229,8 @@ export default function App() {
                                 <select
                                     id="status"
                                     name="status"
-                                    defaultValue={editingItem?.status || 'Almacén'}
+                                    value={statusValue}
+                                    onChange={(e) => setStatusValue(e.target.value)}
                                     className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-shadow"
                                 >
                                     <option value="Almacén">Almacén</option>
@@ -243,7 +238,7 @@ export default function App() {
                                     <option value="Reparación" disabled={currentView === 'costumes'}>Reparación</option>
                                 </select>
                             </div>
-                            <div className={`${(editingItem?.status === 'Prestado' || (document.getElementById('status')?.value === 'Prestado' && !editingItem)) ? '' : 'hidden'}`}>
+                            <div className={`${statusValue === 'Prestado' ? '' : 'hidden'}`}>
                                 <label htmlFor="loanedTo" className="block text-gray-700 font-semibold mb-1">Prestado a</label>
                                 <input
                                     type="text"
