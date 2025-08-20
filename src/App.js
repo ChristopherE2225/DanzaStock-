@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection } from 'firebase/firestore';
+import { getFirestore, doc, addDoc, setDoc, deleteDoc, onSnapshot, collection } from 'firebase/firestore';
 
 // Main application component
 export default function App() {
@@ -11,10 +11,10 @@ export default function App() {
     const [message, setMessage] = useState({ text: '', type: '' });
     const [db, setDb] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+    // New state variable to control the 'status' dropdown value
     const [statusValue, setStatusValue] = useState('Almacén');
 
-    // Debugging block: Firebase config for local testing
-    // If you are not using Canvas, you can paste your Firebase config here.
+    // Firebase config for local testing.
     const localFirebaseConfig = {
         apiKey: "AIzaSyALk8eY3cyM0yfIWCvHKTouos0bK0eIMMo",
         authDomain: "danzastock-app.firebaseapp.com",
@@ -25,10 +25,11 @@ export default function App() {
         measurementId: "G-8NWQSRN9VD"
     };
 
-    // Firebase-related variables from the environment (provided by the Canvas platform)
+    // Firebase config from the environment (provided by the Canvas platform)
+    // This correctly uses the environment variable in production and the local config for testing.
     const firebaseConfig = process.env.NODE_ENV === 'production' && typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : localFirebaseConfig;
 
-    // Use a single useEffect to handle changes to `editingItem`
+    // Use a single useEffect to handle changes to `editingItem` and update the form state
     useEffect(() => {
         if (editingItem) {
             setStatusValue(editingItem.status);
@@ -53,7 +54,7 @@ export default function App() {
         initializeFirebase();
     }, []);
 
-    // useEffect hook to set up Firestore listener
+    // useEffect hook to set up Firestore listener for real-time updates
     useEffect(() => {
         if (!db) return;
         const collectionRef = collection(db, 'danzastock_inventario');
@@ -75,7 +76,7 @@ export default function App() {
         setTimeout(() => setMessage({ text: '', type: '' }), 3000);
     };
 
-    // Function to handle form submission
+    // Function to handle form submission (add or edit item)
     const handleFormSubmit = async (e) => {
         e.preventDefault();
         if (!db) {
@@ -86,7 +87,7 @@ export default function App() {
         const formData = new FormData(e.target);
         const itemData = {
             name: formData.get('name'),
-            status: statusValue,
+            status: statusValue, // Use the state variable
             loanedTo: formData.get('loanedTo') || '',
         };
 
@@ -238,6 +239,7 @@ export default function App() {
                                     <option value="Reparación" disabled={currentView === 'costumes'}>Reparación</option>
                                 </select>
                             </div>
+                            {/* Correctly show/hide the 'loanedTo' field based on the statusValue state */}
                             <div className={`${statusValue === 'Prestado' ? '' : 'hidden'}`}>
                                 <label htmlFor="loanedTo" className="block text-gray-700 font-semibold mb-1">Prestado a</label>
                                 <input
