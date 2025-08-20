@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, addDoc, setDoc, deleteDoc, onSnapshot, collection } from 'firebase/firestore';
+import { getAuth, signInAnonymously } from 'firebase/auth';
+import { getFirestore, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, collection } from 'firebase/firestore';
 
 // Main application component
 export default function App() {
@@ -11,11 +12,12 @@ export default function App() {
     const [message, setMessage] = useState({ text: '', type: '' });
     const [db, setDb] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
-    // New state variable to control the 'status' dropdown value
     const [statusValue, setStatusValue] = useState('Almacén');
+    const [isDbConnected, setIsDbConnected] = useState(false);
 
-    // Firebase config for local testing.
-    const localFirebaseConfig = {
+    // This is the only place you need to change your Firebase configuration.
+    // Replace the dummy values with your actual Firebase config.
+    const firebaseConfig = {
         apiKey: "AIzaSyALk8eY3cyM0yfIWCvHKTouos0bK0eIMMo",
         authDomain: "danzastock-app.firebaseapp.com",
         projectId: "danzastock-app",
@@ -25,11 +27,7 @@ export default function App() {
         measurementId: "G-8NWQSRN9VD"
     };
 
-    // Firebase config from the environment (provided by the Canvas platform)
-    // This correctly uses the environment variable in production and the local config for testing.
-    const firebaseConfig = process.env.NODE_ENV === 'production' && typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : localFirebaseConfig;
-
-    // Use a single useEffect to handle changes to `editingItem` and update the form state
+    // Use a single useEffect to handle changes to `editingItem`
     useEffect(() => {
         if (editingItem) {
             setStatusValue(editingItem.status);
@@ -38,26 +36,40 @@ export default function App() {
         }
     }, [editingItem]);
 
-    // useEffect hook to initialize Firebase and set up the database
+    // New useEffect to handle Firebase initialization and authentication
     useEffect(() => {
-        const initializeFirebase = async () => {
+        const initializeFirebaseAndAuth = async () => {
             try {
+                // Initialize Firebase app
                 const app = initializeApp(firebaseConfig);
+                const auth = getAuth(app);
                 const dbInstance = getFirestore(app);
+
+                // Authenticate the user for data access using anonymous login
+                // This is the simplest way to provide access to a shared collection.
+                await signInAnonymously(auth);
+
                 setDb(dbInstance);
+                setIsDbConnected(true);
                 console.log("Firebase inicializado y conectado a Firestore.");
             } catch (e) {
                 console.error("Error al inicializar Firebase:", e);
                 showMessage("Error al inicializar la base de datos.", 'error');
             }
         };
-        initializeFirebase();
+        initializeFirebaseAndAuth();
     }, []);
 
-    // useEffect hook to set up Firestore listener for real-time updates
+    // useEffect hook to set up Firestore listener for real-time data updates.
+    // It now points to a shared public collection to ensure all devices see the same data.
     useEffect(() => {
+        // Only proceed if the database is initialized
         if (!db) return;
-        const collectionRef = collection(db, 'danzastock_inventario');
+        
+        // Define a simple, shared collection path.
+        const collectionPath = `inventario_compartido`;
+        const collectionRef = collection(db, collectionPath);
+        
         const unsubscribe = onSnapshot(collectionRef, (querySnapshot) => {
             const allItems = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             const materials = allItems.filter(item => item.quantity !== undefined);
@@ -85,18 +97,21 @@ export default function App() {
         }
 
         const formData = new FormData(e.target);
+        // Correctly use the 'statusValue' state instead of reading from the DOM
         const itemData = {
             name: formData.get('name'),
-            status: statusValue, // Use the state variable
+            status: statusValue,
             loanedTo: formData.get('loanedTo') || '',
         };
 
         if (currentView === 'materials') {
             itemData.quantity = parseInt(formData.get('quantity'), 10);
         }
+        
+        // Use the simple shared collection path
+        const inventoryCollectionRef = collection(db, 'inventario_compartido');
 
         try {
-            const inventoryCollectionRef = collection(db, 'danzastock_inventario');
             if (editingItem) {
                 await setDoc(doc(inventoryCollectionRef, editingItem.id), itemData);
                 showMessage('Artículo editado correctamente.', 'success');
@@ -109,6 +124,7 @@ export default function App() {
             showMessage('Error al guardar el artículo.', 'error');
         }
 
+        // Reset form and editing state
         e.target.reset();
         setEditingItem(null);
     };
@@ -124,8 +140,11 @@ export default function App() {
             showMessage('Error de conexión con la base de datos.', 'error');
             return;
         }
+        
+        // Use the simple shared collection path
+        const itemDocRef = doc(db, 'inventario_compartido', id);
+
         try {
-            const itemDocRef = doc(db, 'danzastock_inventario', id);
             await deleteDoc(itemDocRef);
             showMessage('Artículo eliminado correctamente.', 'success');
         } catch (e) {
@@ -198,6 +217,12 @@ export default function App() {
                         <h2 id="form-title" className="text-3xl font-bold text-gray-800 mb-4 text-center">
                             {editingItem ? `Editar ${currentView === 'materials' ? 'Material' : 'Vestuario'}` : `Añadir ${currentView === 'materials' ? 'Material' : 'Vestuario'}`}
                         </h2>
+                        {isDbConnected && (
+                            <div className="flex items-center justify-center text-sm text-green-600 font-semibold mb-4 animate-fadeIn">
+                                <div className="w-2.5 h-2.5 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+                                <p>Conectado a la base de datos</p>
+                            </div>
+                        )}
                         <form id="item-form" onSubmit={handleFormSubmit} className="space-y-4">
                             <div>
                                 <label htmlFor="name" className="block text-gray-700 font-semibold mb-1">Nombre</label>
@@ -239,7 +264,6 @@ export default function App() {
                                     <option value="Reparación" disabled={currentView === 'costumes'}>Reparación</option>
                                 </select>
                             </div>
-                            {/* Correctly show/hide the 'loanedTo' field based on the statusValue state */}
                             <div className={`${statusValue === 'Prestado' ? '' : 'hidden'}`}>
                                 <label htmlFor="loanedTo" className="block text-gray-700 font-semibold mb-1">Prestado a</label>
                                 <input
@@ -267,6 +291,9 @@ export default function App() {
                                 Cancelar
                             </button>
                         )}
+                        <div className="mt-4 text-center text-xs text-gray-400 break-all">
+                             ID de Usuario: anónimo
+                        </div>
                     </div>
 
                     <div className="md:col-span-2">
@@ -286,40 +313,40 @@ export default function App() {
                             </div>
                         )}
                         <div id="item-list" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {items[currentView].length === 0 ? (
+                            {items[currentView].length === 0 && (
                                 <p className="col-span-full text-center text-gray-500 text-lg">
                                     Cargando...
                                 </p>
-                            ) : filteredItems.length === 0 ? (
+                            )}
+                            {filteredItems.length === 0 && (
                                 <p className="col-span-full text-center text-gray-500 text-lg">
                                     No se encontraron {currentView}. ¡Intenta agregar uno!
                                 </p>
-                            ) : (
-                                filteredItems.map(item => (
-                                    <div key={item.id} className="bg-white p-4 rounded-xl shadow-lg border-2 border-slate-200 hover:shadow-xl transition-shadow duration-300 transform hover:scale-105">
-                                        <h3 className="font-bold text-lg text-indigo-800 break-words">{item.name}</h3>
-                                        {currentView === 'materials' && <p className="text-gray-600">Cantidad: {item.quantity}</p>}
-                                        <p className="text-gray-600">
-                                            Estado: <span className={`font-semibold ${item.status === 'Almacén' ? 'text-green-600' : item.status === 'Prestado' ? 'text-orange-600' : item.status === 'Reparación' ? 'text-yellow-600' : 'text-red-600'}`}>{item.status}</span>
-                                        </p>
-                                        {item.status === 'Prestado' && <p className="text-gray-600">Prestado a: <span className="font-semibold text-blue-600">{item.loanedTo}</span></p>}
-                                        <div className="mt-4 flex justify-end space-x-2">
-                                            <button
-                                                className="edit-btn bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-full shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-75"
-                                                onClick={() => handleEdit(item)}
-                                            >
-                                                Editar
-                                            </button>
-                                            <button
-                                                className="delete-btn bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-75"
-                                                onClick={() => handleDelete(item.id)}
-                                            >
-                                                Eliminar
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))
                             )}
+                            {filteredItems.map(item => (
+                                <div key={item.id} className="bg-white p-4 rounded-xl shadow-lg border-2 border-slate-200 hover:shadow-xl transition-shadow duration-300 transform hover:scale-105">
+                                    <h3 className="font-bold text-lg text-indigo-800 break-words">{item.name}</h3>
+                                    {currentView === 'materials' && <p className="text-gray-600">Cantidad: {item.quantity}</p>}
+                                    <p className="text-gray-600">
+                                        Estado: <span className={`font-semibold ${item.status === 'Almacén' ? 'text-green-600' : item.status === 'Prestado' ? 'text-orange-600' : item.status === 'Reparación' ? 'text-yellow-600' : 'text-red-600'}`}>{item.status}</span>
+                                    </p>
+                                    {item.status === 'Prestado' && <p className="text-gray-600">Prestado a: <span className="font-semibold text-blue-600">{item.loanedTo}</span></p>}
+                                    <div className="mt-4 flex justify-end space-x-2">
+                                        <button
+                                            className="edit-btn bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-full shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-75"
+                                            onClick={() => handleEdit(item)}
+                                        >
+                                            Editar
+                                        </button>
+                                        <button
+                                            className="delete-btn bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-75"
+                                            onClick={() => handleDelete(item.id)}
+                                        >
+                                            Eliminar
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 </main>
