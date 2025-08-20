@@ -166,7 +166,7 @@ export default function App() {
     );
 
     return (
-        <div className="bg-gray-100 min-h-screen p-4 md:p-8 text-gray-800 font-inter">
+        <div className="bg-gradient-to-br from-indigo-100 via-purple-100 to-pink-100 min-h-screen p-4 md:p-8 text-gray-800 font-inter">
             <style>
                 {`
                 @keyframes fadeIn {
@@ -188,23 +188,23 @@ export default function App() {
                 }
                 `}
             </style>
-            <div className="container mx-auto">
-                <header className="bg-white p-6 rounded-3xl shadow-lg mb-8 text-center">
-                    <h1 className="text-4xl md:text-5xl font-extrabold text-blue-900 mb-2 drop-shadow-md">
-                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-500 to-indigo-600">Danzastock</span>
+            <div className="container mx-auto max-w-7xl">
+                <header className="bg-white p-6 rounded-3xl shadow-xl ring-1 ring-inset ring-purple-200/50 backdrop-blur-md bg-opacity-80 mb-8 text-center animate-fadeIn">
+                    <h1 className="text-5xl md:text-6xl font-extrabold text-blue-900 mb-2 drop-shadow-lg">
+                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-700">Danzastock</span>
                     </h1>
-                    <p className="text-xl text-gray-500">Gestión de Inventario de Danza</p>
-                    <div className="mt-4 flex flex-wrap justify-center space-x-2 md:space-x-4">
+                    <p className="text-xl text-gray-600 font-medium">Gestión de Inventario de Danza</p>
+                    <div className="mt-6 flex flex-wrap justify-center space-x-2 md:space-x-4">
                         <button
                             id="materials-btn"
-                            className={`view-btn py-2 px-6 rounded-full font-bold transition-colors duration-300 text-lg shadow-lg transform hover:scale-105 ${currentView === 'materials' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-indigo-200'}`}
+                            className={`view-btn py-2 px-6 rounded-full font-bold transition-all duration-300 text-lg shadow-md transform hover:scale-105 ${currentView === 'materials' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600'}`}
                             onClick={() => handleViewChange('materials')}
                         >
                             Materiales
                         </button>
                         <button
                             id="costumes-btn"
-                            className={`view-btn py-2 px-6 rounded-full font-bold transition-colors duration-300 text-lg shadow-lg transform hover:scale-105 ${currentView === 'costumes' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-indigo-200'}`}
+                            className={`view-btn py-2 px-6 rounded-full font-bold transition-all duration-300 text-lg shadow-md transform hover:scale-105 ${currentView === 'costumes' ? 'bg-indigo-600 text-white shadow-lg' : 'bg-gray-100 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600'}`}
                             onClick={() => handleViewChange('costumes')}
                         >
                             Vestuarios
@@ -213,7 +213,7 @@ export default function App() {
                 </header>
 
                 <main className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    <div className="md:col-span-1 bg-white p-6 rounded-3xl shadow-lg h-fit sticky">
+                    <div className="md:col-span-1 bg-white p-6 rounded-3xl shadow-xl ring-1 ring-inset ring-indigo-200/50 h-fit sticky animate-fadeIn">
                         <h2 id="form-title" className="text-3xl font-bold text-gray-800 mb-4 text-center">
                             {editingItem ? `Editar ${currentView === 'materials' ? 'Material' : 'Vestuario'}` : `Añadir ${currentView === 'materials' ? 'Material' : 'Vestuario'}`}
                         </h2>
@@ -277,7 +277,7 @@ export default function App() {
                             </div>
                             <button
                                 type="submit"
-                                className="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 rounded-xl text-lg shadow-lg transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-400 focus:ring-opacity-75"
+                                className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-bold py-3 rounded-xl text-lg shadow-lg transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-indigo-400 focus:ring-opacity-75"
                             >
                                 {editingItem ? 'Guardar Cambios' : 'Añadir a Inventario'}
                             </button>
@@ -286,7 +286,7 @@ export default function App() {
                             <button
                                 id="cancel-btn"
                                 onClick={() => setEditingItem(null)}
-                                className="mt-2 w-full bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 rounded-xl text-lg shadow-lg transition-all duration-200 transform hover:scale-105"
+                                className="mt-2 w-full bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 rounded-xl text-lg shadow-md transition-all duration-200 transform hover:scale-105"
                             >
                                 Cancelar
                             </button>
@@ -318,13 +318,13 @@ export default function App() {
                                     Cargando...
                                 </p>
                             )}
-                            {filteredItems.length === 0 && (
+                            {filteredItems.length === 0 && items[currentView].length > 0 && (
                                 <p className="col-span-full text-center text-gray-500 text-lg">
                                     No se encontraron {currentView}. ¡Intenta agregar uno!
                                 </p>
                             )}
                             {filteredItems.map(item => (
-                                <div key={item.id} className="bg-white p-4 rounded-xl shadow-lg border-2 border-slate-200 hover:shadow-xl transition-shadow duration-300 transform hover:scale-105">
+                                <div key={item.id} className="bg-white p-4 rounded-2xl shadow-xl ring-1 ring-slate-200/50 hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
                                     <h3 className="font-bold text-lg text-indigo-800 break-words">{item.name}</h3>
                                     {currentView === 'materials' && <p className="text-gray-600">Cantidad: {item.quantity}</p>}
                                     <p className="text-gray-600">
@@ -333,13 +333,13 @@ export default function App() {
                                     {item.status === 'Prestado' && <p className="text-gray-600">Prestado a: <span className="font-semibold text-blue-600">{item.loanedTo}</span></p>}
                                     <div className="mt-4 flex justify-end space-x-2">
                                         <button
-                                            className="edit-btn bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded-full shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-75"
+                                            className="edit-btn bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white font-bold py-2 px-4 rounded-full shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-opacity-75 transform hover:scale-105"
                                             onClick={() => handleEdit(item)}
                                         >
                                             Editar
                                         </button>
                                         <button
-                                            className="delete-btn bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-75"
+                                            className="delete-btn bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-full shadow-md transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-75 transform hover:scale-105"
                                             onClick={() => handleDelete(item.id)}
                                         >
                                             Eliminar
