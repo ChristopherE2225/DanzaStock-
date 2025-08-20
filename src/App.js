@@ -166,8 +166,10 @@ export default function App() {
     );
 
     return (
-        // New change to force Vercel build
-        <div className="bg-gradient-to-br from-green-100 via-emerald-100 to-teal-100 min-h-screen p-4 md:p-8 text-gray-800 font-inter">
+        // Se cambiaron las clases de Tailwind de forma radical para forzar la reconstrucción.
+        <div className="bg-gradient-to-br from-blue-200 via-sky-300 to-cyan-400 min-h-screen p-6 md:p-12 text-gray-900 font-sans">
+            {/* Tailwind CSS inline to force Vercel to rebuild and recognize styles */}
+            <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
             <style>
                 {`
                 @keyframes fadeIn {
